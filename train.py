@@ -9,9 +9,6 @@ from PIL import Image
 
 os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
 
-sys.path.insert(0, "/kaggle/working/Restormer")
-sys.path.insert(0, "/kaggle/working/NAFNet")
-
 import argparse
 
 def parse_args():
@@ -49,11 +46,26 @@ def parse_args():
     parser.add_argument("--test_dir", default=None)
     parser.add_argument("--result_dir", default="results")
 
+    parser.add_argument(
+    "--restormer_root",
+    default="Restormer",
+    help="Path to Restormer repository"
+    )
+    
+    parser.add_argument(
+        "--nafnet_root",
+        default="NAFNet",
+        help="Path to NAFNet repository"
+    )
+
     return parser.parse_args()
     
 
 # ── Paths ─────────────────────────────────────────────────
 args = parse_args()
+
+sys.path.insert(0, args.restormer_root)
+sys.path.insert(0, args.nafnet_root)
 
 TRAIN_DIRS = args.train_dirs
 VAL_DIRS   = args.val_dirs
@@ -209,7 +221,10 @@ def _load_module_from_file(mod_name, path):
     return mod
 
 def load_restormer(ckpt_path):
-    arch_file = "/kaggle/working/Restormer/basicsr/models/archs/restormer_arch.py"
+    arch_file = os.path.join(
+    args.restormer_root,
+    "basicsr/models/archs/restormer_arch.py"
+)
     mod = _load_module_from_file("restormer_arch", arch_file)
     net = mod.Restormer(
         inp_channels=3, out_channels=3, dim=48,
@@ -227,7 +242,10 @@ def load_restormer(ckpt_path):
 def load_nafnet(ckpt_path):
     # ← Uses unique mod_name "nafnet_w64_arch" to avoid sys.modules collision
     # with the width-32 loader below
-    NAFNET_ARCH_DIR = "/kaggle/working/NAFNet/basicsr/models/archs"
+    NAFNET_ARCH_DIR = os.path.join(
+    args.nafnet_root,
+    "basicsr/models/archs"
+)
     for fname in ["arch_util.py", "local_arch.py"]:
         fpath   = os.path.join(NAFNET_ARCH_DIR, fname)
         modname = "basicsr.models.archs." + fname[:-3]
@@ -236,7 +254,10 @@ def load_nafnet(ckpt_path):
             mod  = importlib.util.module_from_spec(spec)
             sys.modules[modname] = mod
             spec.loader.exec_module(mod)
-    arch_file = "/kaggle/working/NAFNet/basicsr/models/archs/NAFNet_arch.py"
+    arch_file = os.path.join(
+        args.nafnet_root,
+        "basicsr/models/archs/NAFNet_arch.py"
+    )
     mod       = _load_module_from_file("nafnet_w64_arch", arch_file)
     net = mod.NAFNet(
         img_channel=3, width=64, middle_blk_num=12,

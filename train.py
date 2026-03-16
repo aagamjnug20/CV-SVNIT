@@ -1,5 +1,5 @@
 """
-train.py — Training entry point for CV-SVNIT.
+train.py — Training entry point for ML-SVNIT.
 
 Quick start
 -----------

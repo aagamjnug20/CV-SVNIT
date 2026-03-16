@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
 
 sys.path.insert(0, "/kaggle/working/Restormer")
 sys.path.insert(0, "/kaggle/working/NAFNet")
@@ -79,6 +79,11 @@ NUM_WORKERS = args.num_workers
 RESUME = args.resume
 MODE   = args.mode
 TEST_DIR = args.test_dir
+
+WEIGHT_DECAY = 1e-4
+LR_MIN = 1e-7
+EMA_DECAY = 0.9999
+GRAD_CLIP = 0.5
 
 os.makedirs(SAVE_DIR,   exist_ok=True)
 os.makedirs(RESULT_DIR, exist_ok=True)

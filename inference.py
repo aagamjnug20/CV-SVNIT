@@ -63,6 +63,8 @@ def parse_args():
 # ============================================================
 args = parse_args()
 
+sys.path.insert(0, args.restormer_root)
+sys.path.insert(0, args.nafnet_root)
 CFG = dict(
     ensemble_ckpt=args.ensemble_ckpt,
     naf_ckpt=args.naf_ckpt,
@@ -98,9 +100,6 @@ CFG = dict(
     extra_data=1,
 
     other_desc="TripleEnsemble Restormer + NAFNet-w64 + NAFNet-w32"
-
-    sys.path.insert(0, args.restormer_root)
-    sys.path.insert(0, args.nafnet_root)
 )
 
 os.makedirs(CFG["out_dir"], exist_ok=True)

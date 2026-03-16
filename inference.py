@@ -1,5 +1,5 @@
 """
-inference.py — TTA inference entry point for CV-SVNIT.
+inference.py — TTA inference entry point for ML-SVNIT.
 
 Quick start
 -----------

@@ -18,9 +18,6 @@ import torch.nn.functional as F
 from torch.cuda.amp import autocast
 from tqdm import tqdm
 
-sys.path.insert(0, "/kaggle/working/Restormer")
-sys.path.insert(0, "/kaggle/working/NAFNet")
-
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 import argparse
@@ -45,6 +42,18 @@ def parse_args():
 
     parser.add_argument("--tta", action="store_true")
 
+    parser.add_argument(
+    "--restormer_root",
+    default="Restormer",
+    help="Path to Restormer repository"
+    )
+    
+    parser.add_argument(
+        "--nafnet_root",
+        default="NAFNet",
+        help="Path to NAFNet repository"
+    )
+
     return parser.parse_args()
 
 
@@ -60,12 +69,19 @@ CFG = dict(
     rest_ckpt=args.rest_ckpt,
     model_c_ckpt=args.modelc_ckpt,
 
-    rest_arch="Restormer/basicsr/models/archs/restormer_arch.py",
-    naf_arch="NAFNet/basicsr/models/archs/NAFNet_arch.py",
+    rest_arch=os.path.join(
+    args.restormer_root,
+    "basicsr/models/archs/restormer_arch.py"
+    ),
+    
+    naf_arch=os.path.join(
+    args.nafnet_root,
+    "basicsr/models/archs/NAFNet_arch.py"
+    ),
 
     naf_deps=[
-        "NAFNet/basicsr/models/archs/arch_util.py",
-        "NAFNet/basicsr/models/archs/local_arch.py"
+    os.path.join(args.nafnet_root,"basicsr/models/archs/arch_util.py"),
+    os.path.join(args.nafnet_root,"basicsr/models/archs/local_arch.py")
     ],
 
     test_dir=args.test_dir,
@@ -82,6 +98,9 @@ CFG = dict(
     extra_data=1,
 
     other_desc="TripleEnsemble Restormer + NAFNet-w64 + NAFNet-w32"
+
+    sys.path.insert(0, args.restormer_root)
+    sys.path.insert(0, args.nafnet_root)
 )
 
 os.makedirs(CFG["out_dir"], exist_ok=True)

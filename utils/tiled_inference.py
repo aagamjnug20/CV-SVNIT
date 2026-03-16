@@ -1,6 +1,5 @@
 import torch
 
-
 @torch.no_grad()
 def forward_tiled(model,x,tile=128,overlap=8):
 
@@ -19,7 +18,8 @@ def forward_tiled(model,x,tile=128,overlap=8):
 
             patch=x[:,:,t:t+tile,l:l+tile]
 
-            pred=model(patch)
+            with torch.amp.autocast("cuda"):
+                pred=model(patch).float()
 
             out[:,:,t:t+tile,l:l+tile]+=pred
             count[:,:,t:t+tile,l:l+tile]+=1

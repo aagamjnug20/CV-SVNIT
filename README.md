@@ -1,119 +1,296 @@
 # ML-SVNIT — TripleEnsemble Image Denoising
 
 **Restormer + NAFNet-w64 + NAFNet-w32** with learned softmax mixing weights,
-EMA, Lookahead-AdamW, and 8-fold TTA.
+EMA stabilization, Lookahead-AdamW optimization, and 8-fold test-time augmentation.
+
+Designed for **AWGN denoising (σ = 50)** and compatible with **NTIRE submission format**.
 
 ---
 
-## Repo structure
+# Repository structure
 
 ```
 ML-SVNIT/
-├── config.py              ← all paths & hyper-params (env-var overridable)
-├── train.py               ← training entry point
-├── inference.py           ← TTA inference + NTIRE ZIP entry point
-├── requirements.txt
 │
-├── models/
-│   └── ensemble.py        ← TripleEnsemble + backbone loaders
+├── train.py            # training pipeline
+├── inference.py        # inference + NTIRE submission generator
 │
-├── datasets/
-│   └── dataset.py         ← DIV2KDataset (train / val / test)
+├── Restormer/          # Restormer repository
+├── NAFNet/             # NAFNet repository
 │
-├── engine/
-│   ├── trainer.py         ← Lookahead, WarmupCosine, train_one_epoch
-│   └── validator.py       ← tiled forward, validate()
-│
-├── utils/
-│   ├── losses.py          ← Charbonnier + MSE
-│   ├── metrics.py         ← PSNR
-│   ├── ema.py             ← EMA
-│   └── checkpoint.py      ← save_ckpt / load_ckpt
-│
-├── Restormer/             ← git submodule
-├── NAFNet/                ← git submodule
-│
-├── checkpoints/           ← put pre-trained .pth files here
+├── checkpoints/        # pretrained backbone checkpoints
 │   ├── nafnet_best_sigma50.pth
 │   ├── restormer_best_sigma50.pth
 │   └── NAFNet-SIDD-width32.pth
 │
-├── datasets/
-│   ├── train/             ← training PNGs
-│   └── val/               ← validation PNGs
+├── results/            # inference outputs
 │
-└── outputs/               ← created automatically
-    ├── checkpoints/best.pth
-    ├── results/
-    └── submission.zip
+└── submission.zip      # NTIRE submission package
 ```
 
 ---
 
-## Quick start (local / Colab / HPC)
+# Installation
+
+### Clone repository
 
 ```bash
-git clone --recurse-submodules https://github.com/aagamjnug20/CV-SVNIT
-cd CV-SVNIT
-pip install -r requirements.txt
+git clone https://github.com/aagamjnug20/ML-SVNIT
+cd ML-SVNIT
+```
 
-python train.py
-python inference.py
+### Clone backbone repositories
+
+```bash
+git clone https://github.com/swz30/Restormer.git
+git clone https://github.com/megvii-research/NAFNet.git
+```
+
+### Install dependencies
+
+```bash
+pip install torch torchvision einops timm lmdb imageio tqdm
 ```
 
 ---
 
-## Kaggle usage
+# Training
+
+Training uses:
+
+* **TripleEnsemble architecture**
+* **Lookahead-AdamW optimizer**
+* **Warmup Cosine LR schedule**
+* **EMA weights**
+* **Charbonnier + MSE loss**
+
+---
+
+## Training command
+
+```bash
+python train.py \
+--train_dirs \
+/path/to/DIV2K_train_HR \
+/path/to/LSDIR/shard-00 \
+\
+--val_dirs \
+/path/to/DIV2K_valid_HR \
+\
+--naf_ckpt checkpoints/nafnet_best_sigma50.pth \
+--rest_ckpt checkpoints/restormer_best_sigma50.pth \
+--modelc_ckpt checkpoints/NAFNet-SIDD-width32.pth \
+\
+--patch_size 128 \
+--batch_size 2 \
+--epochs 100 \
+\
+--sigma 50 \
+\
+--lr_pretrained 5e-5 \
+--lr_new 1e-4 \
+\
+--warmup_steps 2000 \
+\
+--num_workers 4 \
+\
+--save_dir checkpoints
+```
+
+---
+
+## Resume training
+
+```bash
+python train.py \
+--train_dirs ... \
+--val_dirs ... \
+--naf_ckpt ... \
+--rest_ckpt ... \
+--modelc_ckpt ... \
+--resume checkpoints/best.pth
+```
+
+---
+
+# Inference
+
+Inference supports:
+
+* **8-fold TTA**
+* **tiled inference for large images**
+* **automatic NTIRE submission ZIP generation**
+
+---
+
+## Inference command
+
+```bash
+python inference.py \
+--ensemble_ckpt checkpoints/best.pth \
+\
+--naf_ckpt checkpoints/nafnet_best_sigma50.pth \
+--rest_ckpt checkpoints/restormer_best_sigma50.pth \
+--modelc_ckpt checkpoints/NAFNet-SIDD-width32.pth \
+\
+--test_dir /path/to/test_images \
+\
+--out_dir results \
+--zip_path submission.zip \
+\
+--tile 256 \
+--overlap 32 \
+\
+--tta
+```
+
+---
+
+## Disable TTA (faster inference)
+
+Remove the flag:
+
+```
+--tta
+```
+
+This reduces runtime by **~8×**.
+
+---
+
+# Kaggle Usage
+
+Example Kaggle setup:
 
 ```python
-# In a Kaggle notebook cell:
-!git clone --recurse-submodules https://github.com/aagamjnug20/CV-SVNIT
-%cd CV-SVNIT
-!pip install -r requirements.txt -q
+!git clone https://github.com/aagamjnug20/ML-SVNIT
+%cd ML-SVNIT
+
+!git clone https://github.com/swz30/Restormer.git
+!git clone https://github.com/megvii-research/NAFNet.git
+
+!pip install einops timm lmdb imageio tqdm -q
 ```
+
+Run training:
 
 ```python
-import os
-os.environ["TRAIN_DIRS"]  = "/kaggle/input/div2k/train,/kaggle/input/lsdir/shard-00"
-os.environ["VAL_DIRS"]    = "/kaggle/input/div2k/val"
-os.environ["TEST_DIR"]    = "/kaggle/input/lsdir-div2k-testing"
-os.environ["CKPT_DIR"]    = "/kaggle/input/pretrained"
-os.environ["OUTPUT_DIR"]  = "/kaggle/working"
+!python train.py \
+--train_dirs /kaggle/input/div2k/train \
+--val_dirs /kaggle/input/div2k/val \
+--naf_ckpt /kaggle/input/checkpoints/nafnet_best_sigma50.pth \
+--rest_ckpt /kaggle/input/checkpoints/restormer_best_sigma50.pth \
+--modelc_ckpt /kaggle/working/NAFNet-SIDD-width32.pth
+```
 
-!python train.py
-!python inference.py
+Run inference:
+
+```python
+!python inference.py \
+--ensemble_ckpt /kaggle/working/checkpoints/best.pth \
+--naf_ckpt /kaggle/input/checkpoints/nafnet_best_sigma50.pth \
+--rest_ckpt /kaggle/input/checkpoints/restormer_best_sigma50.pth \
+--modelc_ckpt /kaggle/working/NAFNet-SIDD-width32.pth \
+--test_dir /kaggle/input/lsdir-div2k-testing \
+--tta
 ```
 
 ---
 
-## Environment variables (all optional)
+# Method Summary
 
-| Variable        | Default                   | Description                              |
-|-----------------|---------------------------|------------------------------------------|
-| `TRAIN_DIRS`    | `datasets/train`          | Comma-separated training dirs            |
-| `VAL_DIRS`      | `datasets/val`            | Comma-separated validation dirs          |
-| `TEST_DIR`      | `datasets/test`           | Test images for inference                |
-| `CKPT_DIR`      | `checkpoints`             | Pre-trained backbone checkpoints         |
-| `OUTPUT_DIR`    | `outputs`                 | All outputs (checkpoints, results, zip)  |
-| `RESUME`        | *(empty)*                 | Path to checkpoint to resume from        |
-| `USE_TTA`       | `1`                       | `0` to disable 8-fold TTA               |
-| `INFER_TILE`    | `256`                     | Tile size for inference (reduce if OOM)  |
-| `INFER_OVERLAP` | `32`                      | Overlap between tiles                    |
-| `BATCH_SIZE`    | `2`                       | Training batch size                      |
-| `NUM_EPOCHS`    | `100`                     | Total training epochs                    |
-| `SIGMA`         | `50.0`                    | AWGN noise level (0–255 scale)           |
+### Architecture
+
+TripleEnsemble:
+
+```
+Restormer
+   │
+NAFNet-w64
+   │
+NAFNet-w32
+```
+
+Outputs are combined via **learned softmax mixing weights**:
+
+```
+output = w1 * Restormer
+       + w2 * NAFNet-w64
+       + w3 * NAFNet-w32
+```
+
+where:
+
+```
+w = softmax(logits)
+```
 
 ---
 
-## Method summary
+### Training schedule
 
-- **Architecture** : TripleEnsemble — three denoising networks whose outputs are blended with
-  learned softmax weights (`logits` parameter).
-- **Training** :
-  - Epochs 0–4  : backbones frozen; only mixing logits trained.
-  - Epochs 5–99 : full fine-tuning with differential LR
-    (5e-5 for backbones, 1e-4 for logits).
-  - Optimizer : Lookahead(AdamW) + WarmupCosine schedule.
-  - Loss : 0.5 × MSE + 0.5 × Charbonnier.
-  - EMA decay = 0.9999 applied during validation and inference.
-- **Inference** : 8-fold TTA (4 rotations × 2 flips) + overlapping tiled processing.
+| Phase   | Epochs | Description                           |
+| ------- | ------ | ------------------------------------- |
+| Stage 1 | 0–4    | freeze backbones, train mixing logits |
+| Stage 2 | 5–100  | full fine-tuning                      |
+
+---
+
+### Optimization
+
+* **Optimizer:** Lookahead(AdamW)
+* **LR schedule:** Warmup Cosine
+* **Backbone LR:** 5e-5
+* **Logits LR:** 1e-4
+
+---
+
+### Loss
+
+```
+Loss = 0.5 × MSE + 0.5 × Charbonnier
+```
+
+---
+
+### EMA
+
+Exponential moving average:
+
+```
+decay = 0.9999
+```
+
+EMA weights are used during:
+
+* validation
+* inference
+
+---
+
+### Inference
+
+* **8-fold TTA**
+* **tiled inference**
+* **overlap blending**
+
+---
+
+# Output
+
+Inference produces:
+
+```
+results/
+   image_001.png
+   image_002.png
+   ...
+readme.txt
+submission.zip
+```
+
+The ZIP file is **NTIRE submission compatible**.
+
+---
+
+It makes the repo **look like a serious research project instead of a coursework repo.**

@@ -373,4 +373,5 @@ def main():
     print(f"\n  ✓ Done. Submission ready at: {cfg['zip_path']}\n")
 
 
-main()
+if __name__ == "__main__":
+    main()

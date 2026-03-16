@@ -1,5 +1,5 @@
 """
-config.py — Central configuration for CV-SVNIT pipeline.
+config.py — Central configuration for ML-SVNIT pipeline.
 
 Every path is resolved from environment variables so the same code
 runs on Kaggle, Colab, a local GPU, or an HPC cluster without

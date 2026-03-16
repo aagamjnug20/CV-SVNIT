@@ -1,4 +1,4 @@
-# CV-SVNIT — TripleEnsemble Image Denoising
+# ML-SVNIT — TripleEnsemble Image Denoising
 
 **Restormer + NAFNet-w64 + NAFNet-w32** with learned softmax mixing weights,
 EMA, Lookahead-AdamW, and 8-fold TTA.
@@ -8,7 +8,7 @@ EMA, Lookahead-AdamW, and 8-fold TTA.
 ## Repo structure
 
 ```
-CV-SVNIT/
+ML-SVNIT/
 ├── config.py              ← all paths & hyper-params (env-var overridable)
 ├── train.py               ← training entry point
 ├── inference.py           ← TTA inference + NTIRE ZIP entry point

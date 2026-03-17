@@ -310,4 +310,3 @@ submission.zip
 The ZIP file is **NTIRE submission compatible**.
 
 ---
-

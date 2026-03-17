@@ -14,6 +14,7 @@ ML-SVNIT/
 │
 ├── train.py            # training pipeline
 ├── inference.py        # inference + NTIRE submission generator
+├── patch.py            # fixes torchvision ≥ 0.16 basicsr issue
 │
 ├── Restormer/          # Restormer repository
 ├── NAFNet/             # NAFNet repository
@@ -44,6 +45,21 @@ cd ML-SVNIT
 ```bash
 git clone https://github.com/swz30/Restormer.git
 git clone https://github.com/megvii-research/NAFNet.git
+```
+---
+
+### ⚠️ Compatibility Patch (MUST RUN)
+
+`basicsr` (used by Restormer & NAFNet) is **incompatible with torchvision ≥ 0.16**.
+
+Without this fix, training and inference will crash with import errors.
+
+---
+
+### Run patch
+
+```bash
+python patch.py
 ```
 
 ### Install dependencies

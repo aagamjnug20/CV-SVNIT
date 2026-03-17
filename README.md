@@ -64,10 +64,6 @@ Without this fix, training and inference will crash with import errors.
 
 ```bash
 python patch.py
-```### Run patch
-
-```bash
-python patch.py
 ```
 
 ---

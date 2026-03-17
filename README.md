@@ -53,13 +53,14 @@ git clone https://github.com/megvii-research/NAFNet.git
 ```bash
 pip install torch torchvision einops timm lmdb imageio tqdm
 ```
+
 ### ⚠️ Compatibility Patch (MUST RUN)
 
 `basicsr` (used by Restormer & NAFNet) is **incompatible with torchvision ≥ 0.16**.
 
 Without this fix, training and inference will crash with import errors.
 
----
+
 ### Run patch
 
 ```bash

@@ -48,12 +48,6 @@ git clone https://github.com/megvii-research/NAFNet.git
 ```
 ---
 
-### Run patch
-
-```bash
-python patch.py
-```
-
 ### Install dependencies
 
 ```bash
@@ -66,6 +60,15 @@ pip install torch torchvision einops timm lmdb imageio tqdm
 Without this fix, training and inference will crash with import errors.
 
 ---
+### Run patch
+
+```bash
+python patch.py
+```### Run patch
+
+```bash
+python patch.py
+```
 
 ---
 

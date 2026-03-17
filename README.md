@@ -293,4 +293,3 @@ The ZIP file is **NTIRE submission compatible**.
 
 ---
 
-It makes the repo **look like a serious research project instead of a coursework repo.**

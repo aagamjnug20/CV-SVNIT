@@ -293,3 +293,21 @@ submission.zip
 The ZIP file is **NTIRE submission compatible**.
 
 ---
+---
+
+## Checkpoints
+
+Download pretrained checkpoints and place them in the `checkpoints/` folder:
+
+| Model | Kaggle Dataset |
+|---|---|
+| NAFNet-w64 (sigma=50) | [rajkumarsharma066/checkpoints](https://www.kaggle.com/datasets/rajkumarsharma066/checkpoints) |
+| Restormer (sigma=50) | [rajkumarsharma066/checkpoints](https://www.kaggle.com/datasets/rajkumarsharma066/checkpoints) |
+| NAFNet-w32 (SIDD pretrain) | [rajkumarsharma066/checkpoints](https://www.kaggle.com/datasets/rajkumarsharma066/checkpoints) |
+| Ensemble checkpoint (best.pth) | [vedpatel066/checkpointtrifusion](https://www.kaggle.com/datasets/vedpatel066/checkpointtrifusion) |
+
+### Download via Kaggle API
+```bash
+kaggle datasets download -d rajkumarsharma066/checkpoints -p checkpoints/ --unzip
+kaggle datasets download -d vedpatel066/checkpointtrifusion -p checkpoints/ --unzip
+```

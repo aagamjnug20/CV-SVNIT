@@ -272,7 +272,7 @@ def load_nafnet(ckpt_path):
 
 def load_model_c(ckpt_path):
     # NAFNet width-32 — uses a different mod_name to avoid overwriting w64 in sys.modules
-    arch_file = "/kaggle/working/NAFNet/basicsr/models/archs/NAFNet_arch.py"
+    arch_file = os.path.join(args.nafnet_root, "basicsr/models/archs/NAFNet_arch.py")
     mod       = _load_module_from_file("nafnet_w32_arch", arch_file)
     net = mod.NAFNet(
         img_channel=3, width=32, middle_blk_num=12,
@@ -502,7 +502,6 @@ def save_ckpt(path, model, optimizer, ema, epoch, best_psnr, scheduler):
         "ema_shadow": ema.shadow,
     }
     torch.save(data, path)
-    shutil.copy(path, "/kaggle/working/best.pth")
     print(f"  [ckpt] saved epoch={epoch}  best_psnr={best_psnr:.4f}", flush=True)
 
 def load_ckpt(path, model, optimizer, ema, scheduler):
